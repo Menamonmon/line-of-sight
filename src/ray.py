@@ -2,11 +2,15 @@ import pygame
 import math as mt
 import consts
 
+def dist(p1, p2):
+    xdiff = (p1[0] - p2[0]) ** 2
+    ydiff = (p1[1] - p2[1]) ** 2
+    return mt.sqrt(xdiff + ydiff)
 class Ray:
 
-    def __init__(self, sx, sy, direction, color=consts.WHITE, width=1):
+    def __init__(self, sx, sy, direction, color=consts.RED, width=1):
         self.start = sx, sy
-        self.dir = mt.radians(direction)
+        self.dir = direction
         self.color = color
         self.width = width
 
@@ -29,11 +33,6 @@ class Ray:
         b = y1 - (m * x1)
         return m, b
 
-    def __dist(self, p1, p2):
-        xdiff = (p1[0] - p2[0]) ** 2
-        ydiff = (p1[1] - p2[1]) ** 2
-        return mt.sqrt(xdiff + ydiff)
-
     def draw(self, surface, walls, update=False):
         colliding_walls = [(wall, wall.collides(self)) for wall in walls if wall.collides(self) is not None]
         if not len(colliding_walls):
@@ -41,16 +40,15 @@ class Ray:
         if colliding_walls.count(None):
             return
         try:        
-            colliding_walls = sorted(colliding_walls, key=lambda x: self.__dist(self.start, x[1]))
+            colliding_walls = sorted(colliding_walls, key=lambda x: dist(self.start, x[1]))
             colliding_point = colliding_walls[0][1]
             colliding_point = tuple(map(int, colliding_point))
-            l = pygame.draw.line(surface, self.color, self.start, colliding_point, self.width)
-            # c = pygame.draw.circle(surface, self.color, colliding_point, 5)
+            l = pygame.draw.aaline(surface, self.color, self.start, colliding_point, self.width)
+            c = pygame.draw.circle(surface, self.color, colliding_point, 3)
             if update:
                 pygame.display.update(l)
-                # pygame.display.update(c)
+                pygame.display.update(c)
 
         except TypeError:
-            print(f'The ray with the direction {mt.degrees(self.dir)} cannot be displayed.')
-
+            pass
     

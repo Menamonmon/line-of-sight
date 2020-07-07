@@ -24,14 +24,14 @@ def point_lies_on_line(sx, sy, ex, ey, x, y):
 
 class Wall:
 
-    def __init__(self, sx, sy, ex, ey, color=consts.WHITE, width=1):
+    def __init__(self, sx, sy, ex, ey, color=consts.GREY, width=1):
         self.start = sx, sy
         self.end = ex, ey
         self.color = color
         self.width = width
 
     def draw(self, surface):
-        pygame.draw.line(surface, self.color, self.start, self.end, self.width)
+        pygame.draw.aaline(surface, self.color, self.start, self.end, self.width)
 
     def equation(self):
         m = (self.start[1] - self.end[1]) / (self.start[0] - self.end[0])
@@ -52,7 +52,7 @@ class Wall:
 
         t = (((x1 - x3) * (y3 - y4)) - ((y1 - y3) * (x3 - x4))) / den
         u = - (((x1 - x2) * (y1 - y3)) - ((y1 - y2) * (x1 - x3))) / den
-        if 0 < t < 1 and ((left_side and u <=0) or (not left_side and u > 0)):
+        if 0 < t < 1 and ((left_side and u <= 0) or (not left_side and u > 0)):
             return x1 + (t * (x2 - x1)), y1 + (t * (y2 - y1))
 
 def test():
