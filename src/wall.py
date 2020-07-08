@@ -52,8 +52,34 @@ class Wall:
 
         t = (((x1 - x3) * (y3 - y4)) - ((y1 - y3) * (x3 - x4))) / den
         u = - (((x1 - x2) * (y1 - y3)) - ((y1 - y2) * (x1 - x3))) / den
-        if 0 < t < 1 and ((left_side and u <= 0) or (not left_side and u > 0)):
+        if 0 <= t <= 1 and ((left_side and u <= 0) or (not left_side and u >= 0)):
             return x1 + (t * (x2 - x1)), y1 + (t * (y2 - y1))
+
+    def _intersects(self, other_wall):
+        x1, y1 = self.start
+        x2, y2 = self.end
+        x3, y3 = other_wall.start
+        x4, y4 = other_wall.end
+
+        den = ((x1 - x2) * (y3 - y4)) - ((y1 - y2) * (x3 - x4))
+        if den == 0:
+            return
+
+        t = (((x1 - x3) * (y3 - y4)) - ((y1 - y3) * (x3 - x4))) / den
+        u = - (((x1 - x2) * (y1 - y3)) - ((y1 - y2) * (x1 - x3))) / den
+        if 0 <= t <= 1 and 0 <= u <= 1:
+            return x1 + (t * (x2 - x1)), y1 + (t * (y2 - y1))
+    
+    def get_intersections(self, other_walls):
+        intersections = []
+        for wall in other_walls:
+            i = self._intersects(wall)
+            if i != None:
+                intersections.append(i)
+
+        return intersections
+
+        
 
 def test():
     wall = Wall(3, 6, 6, 4)

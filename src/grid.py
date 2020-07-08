@@ -61,6 +61,7 @@ def test():
 	surface = pygame.display.set_mode((600, 600))
 	grid = Grid(surface)
 	running = True
+	clock = pygame.time.Clock()
 
 	while running:
 		e = pygame.event.poll()
@@ -77,6 +78,7 @@ def test():
 
 		surface.fill(consts.WHITE)
 		grid.draw()
+		clock.tick(60)
 		pygame.display.update()
 
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ class Ray:
         b = y1 - (m * x1)
         return m, b
 
-    def draw(self, surface, walls, update=False):
+    def draw(self, surface, walls, update=False, show_collide_pt=False, only_endpt=False):
         colliding_walls = [(wall, wall.collides(self)) for wall in walls if wall.collides(self) is not None]
         if not len(colliding_walls):
             return
@@ -43,11 +43,15 @@ class Ray:
             colliding_walls = sorted(colliding_walls, key=lambda x: dist(self.start, x[1]))
             colliding_point = colliding_walls[0][1]
             colliding_point = tuple(map(int, colliding_point))
-            l = pygame.draw.aaline(surface, self.color, self.start, colliding_point, self.width)
-            c = pygame.draw.circle(surface, self.color, colliding_point, 3)
-            if update:
-                pygame.display.update(l)
-                pygame.display.update(c)
+            if not only_endpt:
+                l = pygame.draw.aaline(surface, self.color, self.start, colliding_point, self.width)
+                if show_collide_pt:
+                    c = pygame.draw.circle(surface, self.color, colliding_point, 3)
+                if update:
+                    pygame.display.update(l)
+                    if show_collide_pt:
+                        pygame.display.update(c)
+            return colliding_point
 
         except TypeError:
             pass
