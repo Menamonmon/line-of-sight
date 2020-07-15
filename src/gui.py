@@ -1,128 +1,150 @@
-# for recovery
+from grid import *
+import time
 
-# take the vertices of the walls and add then to the list pts
-        pts = []
-        for wall in walls:
-            pts.append(wall.start)
-            pts.append(wall.end)
+pygame.font.init()
 
-        # delete repeated points 
-        pts = set(pts)
+def replace_color(image, old, new):
+	w, h = image.get_size()
+	dr, dg, db = old
+	r, g, b = new
+	for x in range(w):
+		for y in range(h):
+			cr, cg, cb, a = image.get_at((x, y))
+			if (cr, cg, cb) == old:
+				image.set_at((x, y), (r, g, b, a))
 
-        # loops throught the pts and calculates the angle between the origin (self.pos) and the vertex (pt)
+class PygameWidget:
 
-        def right_from_origin(o, p):
-            return p[0] > o[0]
+	def __init__(self, pos, width, height, color):
+		self.pos = pos
+		self.width, self.height = width, height
+		self.color = color
+		self.click_time = None
+	
+	def place(self, surf):
+		pass
 
-        angles = []
-        for pt in pts:
-            sign = -1 if not right_from_origin(self.pos, pt) else 1
-            angle = mt.atan2(sign * (pt[1] - self.pos[1]), pt[0] - self.pos[0])
-            angle %= 2*mt.pi
-            angles += [angle+.001, angle, angle-.001]
-        self.rays = [Ray(*self.pos, angle) for angle in angles]
-
-
-0.0
-3.6
-7.2
-10.8
-14.4
-18.0
-21.6
-25.2
-28.8
-32.4
-36.0
-39.6
-43.2
-46.800000000000004
-50.4
-54.0
-57.6
-61.20000000000001
-64.8
-68.4
-72.0
-75.60000000000001
-79.2
-82.8
-86.4
-90.0
-93.60000000000001
-97.2
-100.8
-104.4
-108.0
-111.60000000000001
-115.2
-118.79999999999998
-122.40000000000002
-126.0
-129.6
-133.20000000000002
-136.8
-140.4
-144.0
-147.6
-151.20000000000002
-154.8
-158.4
-162.0
-165.6
-169.20000000000002
-172.8
-176.4
-180.0
+	def get_clicked(self, btn=0):
+		# this checks whether there is a time difference 
+		# between the last time the button was clicked and the current time
+		if self.click_time != None:
+			if abs(self.click_time - time.time()) < .4:
+				return False
+		if not pygame.mouse.get_pressed()[btn]:
+			return False
+		p = pygame.mouse.get_pos()
+		if self.pos[0] <= p[0] <= self.pos[0] + self.width and self.pos[1] <= p[1] <= self.pos[1] + self.height:
+			self.click_time = time.time()
+			return True
 
 
+class PygameButton(PygameWidget):
 
-183.6
-187.20000000000002
-190.8
-194.4
-198.0
-201.6
-205.20000000000002
-208.8
-212.4
-216.0
-219.6
-223.20000000000002
-226.8
-230.4
-234.0
-237.59999999999997
-241.20000000000002
-244.80000000000004
-248.4
-252.0
-255.59999999999997
-259.2
-262.8
-266.40000000000003
-270.0
-273.6
-277.2
-280.8
-284.40000000000003
-288.0
-291.6
-295.2
-298.8
-302.40000000000003
-306.0
-309.6
-313.2
-316.8
-320.40000000000003
-324.0
-327.6
-331.2
-334.8
-338.40000000000003
-342.0
-345.6
-349.2
-352.8
-356.40000000000003
+	def __init__(self, pos, text, color=consts.BLUE, font_color=consts.WHITE, width=100, height=25):
+		super().__init__(pos, width, height, color)
+		self.text = text
+		self.color = color
+		self.font_color = font_color
+		font_size = int(self.height / 2)
+		self.font = pygame.font.Font('./../fonts/Candara.ttf', font_size)
+		self.command = None
+		self.command_args = None
+
+	def place(self, surf):
+		pygame.draw.rect(surf, self.color, pygame.Rect(self.pos, (self.width, self.height)))
+		font_surf = self.render_text()
+		y_padding = int((self.height - font_surf.get_height()) / 2)
+		x_padding = int((self.width - font_surf.get_width()) / 2)
+		font_pos = (self.pos[0] + x_padding, self.pos[1] + y_padding)
+		surf.blit(font_surf, font_pos)
+
+	def render_text(self):
+		font_surface = self.font.render(self.text, True, self.font_color)
+		return font_surface
+
+
+class PygameCheckBtn(PygameWidget):
+
+	def __init__(self, pos, size=50, color=consts.LIGHT_BLUE):
+		super().__init__(pos, size, size, color)
+		self.chosen = True
+		self.load_images()
+
+	def load_images(self):
+		self.checked_image = pygame.image.load('./../images/checkbtn/1.png')
+		self.unchecked_image = pygame.image.load('./../images/checkbtn/0.png')
+		self.checked_image = pygame.transform.scale(self.checked_image, (self.width, self.height))
+		self.unchecked_image = pygame.transform.scale(self.unchecked_image, (self.width, self.height))
+		replace_color(self.checked_image, consts.BLACK, self.color)
+		replace_color(self.unchecked_image, consts.BLACK, self.color)
+
+	def place(self, surf):
+		img = self.checked_image if self.chosen else self.unchecked_image
+		surf.blit(img, self.pos)
+
+	def check(self):
+		self.chosen = True
+
+	def uncheck(self):
+		self.chosen = False
+
+	def reverse(self):
+		self.chosen = not self.chosen
+		
+
+class PygameScrollBar(PygameWidget):
+
+	class Slider:
+
+		def __init__(self, pos, color, rad, val=0):
+			self.pos = pos
+			self.color = color
+			self.rad = rad
+			self.val = val
+
+		def draw(self, surf):
+			pygame.draw.circle(surf, self.color, self.pos + (self.rad * self.val), self.rad)
+
+	def __init__(self, pos, length=100, _min=0, _max=10, color1=consts.BLACK, color2=consts.RED):
+		self.min, self.max = _min, _max
+		diff = abs(self.max - self.min)
+		self.rad = int(length/(diff * 2))
+		super().__init__(pos, length, self.rad * 2, color1)
+		self.slider = PygameScrollBar.Slider((self.pos[0], self.pos[1] + self.rad), color2, self.rad, self.min)
+
+	def place(self, surf):
+		l_start = (self.pos[0], self.pos[1] + self.rad)
+		l_end = (self.pos[0] + self.width, self.pos[1] + self.rad)
+		pygame.draw.line(surf, self.color, l_start, l_end, 5)
+		self.slider.draw(surf)
+
+	def increase(self):
+		self.slider.val += 1
+
+def test_button():
+	surf = pygame.display.set_mode((600, 600))
+	btn = PygameButton((100, 100), "Click Me")
+	checkbtn = PygameCheckBtn((150, 150))
+
+	bar = PygameScrollBar((100, 150))
+
+	while True:
+		event = pygame.event.poll()
+		if event.type == pygame.QUIT:
+			pygame.quit()
+			quit()
+		elif event.type == pygame.KEYDOWN:
+			bar.increase()
+		if checkbtn.get_clicked():
+			checkbtn.reverse()
+		
+
+		surf.fill(consts.WHITE)
+		bar.place(surf)
+		btn.place(surf)
+		checkbtn.place(surf)
+		pygame.display.update()
+	
+if __name__ == "__main__":
+	test_button()
+	

@@ -9,14 +9,40 @@ def dist(p1, p2):
 class Ray:
 
     def __init__(self, sx, sy, direction, color=consts.RED, width=1):
-        self.start = sx, sy
+        self.start = [sx, sy]
         self.dir = direction
         self.color = color
         self.width = width
+        self.intersection_pt = None
 
     @property
     def end(self):
         return self.__make_other_point(self.start, self.dir)
+
+    @property
+    def intersection_pt(self):
+        return self._intersection_pt
+
+    @intersection_pt.setter
+    def intersection_pt(self, new):
+        self._intersection_pt = new
+
+    def check_intersections(self, walls):
+        colliding_walls = []
+        for wall in walls:
+            collision = wall.collides(self)
+            if collision:
+                colliding_walls.append(collision)
+
+        if not len(colliding_walls) or None in colliding_walls:
+            self.intersection_pt = None
+            return
+
+        colliding_walls = sorted(colliding_walls, key=lambda x: dist(self.start, x))
+        colliding_point = colliding_walls[0]
+        colliding_point = tuple(map(int, colliding_point))
+        self.intersection_pt = colliding_point
+
 
     def __make_other_point(self, o, theta):
         x, y = o
@@ -33,26 +59,14 @@ class Ray:
         b = y1 - (m * x1)
         return m, b
 
-    def draw(self, surface, walls, update=False, show_collide_pt=False, only_endpt=False):
-        colliding_walls = [(wall, wall.collides(self)) for wall in walls if wall.collides(self) is not None]
-        if not len(colliding_walls):
+    def draw(self, surface, update=False, show_collide_pt=False):
+        if not self.intersection_pt:
             return
-        if colliding_walls.count(None):
-            return
-        try:        
-            colliding_walls = sorted(colliding_walls, key=lambda x: dist(self.start, x[1]))
-            colliding_point = colliding_walls[0][1]
-            colliding_point = tuple(map(int, colliding_point))
-            if not only_endpt:
-                l = pygame.draw.aaline(surface, self.color, self.start, colliding_point, self.width)
-                if show_collide_pt:
-                    c = pygame.draw.circle(surface, self.color, colliding_point, 3)
-                if update:
-                    pygame.display.update(l)
-                    if show_collide_pt:
-                        pygame.display.update(c)
-            return colliding_point
-
-        except TypeError:
-            pass
+        l = pygame.draw.aaline(surface, self.color, self.start, self.intersection_pt, self.width)
+        if show_collide_pt:
+            c = pygame.draw.circle(surface, self.color, self.intersection_pt, 3)
+        if update:
+            pygame.display.update(l)
+            if show_collide_pt:
+                pygame.display.update(c)
     
